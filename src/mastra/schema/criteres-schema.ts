@@ -6,6 +6,5 @@ export const criteresSchema = z.object({
   ville: z.boolean().optional(),
   sport: z.boolean().optional(),
   detente: z.boolean().optional(),
-  campagne: z.boolean().optional(),
   acces_handicap: z.boolean().optional().default(false),
 });
