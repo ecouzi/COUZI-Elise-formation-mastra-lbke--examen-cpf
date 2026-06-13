@@ -14,6 +14,20 @@ const memory = new Memory({
     id: "travel-agent-memory-v1",
     url: "file:./mastra.db",
   }),
+  options: {
+    workingMemory: {
+      enabled: true,
+      template: `
+# Profil utilisateur
+- plage: null
+- montagne: null
+- ville: null
+- sport: null
+- detente: null
+- acces_handicap: null
+      `
+    }
+  }
 });
 
 /* -----------------------------
@@ -44,15 +58,17 @@ const findBestVoyage = createTool({
       let score = 0;
       if (safe.plage && v.labels.includes("plage")) score += 2;
       if (safe.montagne && v.labels.includes("montagne")) score += 2;
-      if (safe.ville && v.labels.includes("ville")) score += 1;
       if (safe.sport && v.labels.includes("sport")) score += 2;
       if (safe.detente && v.labels.includes("detente")) score += 2;
-      if (safe.campagne === false && v.labels.includes("campagne")) score -= 3
-      if (safe.campagne === true && v.labels.includes("campagne")) score += 1
+      if (safe.montagne === false && v.labels.includes("montagne")) score -= 3
+      if (safe.plage === false && v.labels.includes("plage")) score -= 3
+      if (safe.sport === false && v.labels.includes("sport")) score -= 3
+      if (safe.detente === false && v.labels.includes("detente")) score -= 3
       if (safe.acces_handicap && v.accessibleHandicap !== "oui") {
         score -= 3;
       }
-      return { ...v, score };
+      
+       return { ...v, score };
     });
 
     /* -----------------------------
@@ -60,7 +76,7 @@ const findBestVoyage = createTool({
     ------------------------------ */
     const results = scored.sort((a, b) => b.score - a.score);
     const best = results[0];
-
+    
     if (!best || best.score < 1) {
       return { voyage: null, message: "Aucun voyage ne correspond aux critères." }
     }
@@ -88,8 +104,13 @@ Quand l'utilisateur exprime des préférences, tu DOIS :
    - "altitude / col / neige / alpes" → montagne: true
    - "musée / restaurants / animation / urban" → ville: true
    - "fauteuil roulant / PMR / mobilité réduite" → acces_handicap: true
-3. Appeler findBestVoyage avec TOUS les critères détectés mis à true
-4. Présenter UNIQUEMENT le voyage retourné par le tool — ne jamais en inventer un
+3. Si l'utilisateur REFUSE un critère, le passer à false :
+   - "non montagne / pas de montagne / j'évite la montagne" → montagne: false
+   - "non plage / pas de mer" → plage: false
+   - "non sport / je ne veux pas d'activité" → sport: false
+   - "non campagne / pas de campagne" → campagne: false
+4. Appeler findBestVoyage avec TOUS les critères détectés mis à true
+5. Présenter UNIQUEMENT le voyage retourné par le tool — ne jamais en inventer un
 
 Règles :
 - si message incompréhensible → demander une clarification
